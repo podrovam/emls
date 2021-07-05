@@ -1,0 +1,557 @@
+// файл используется в ТА
+// больше нуля
+function trn (form_name, element_name, mes_text, isFloat) 
+{
+	if (document.forms[form_name].elements[element_name]) {
+		var n = string_trim(document.forms[form_name].elements[element_name].value).replace(/,/, '.');
+		if (n == "") {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		}
+		else if (isNaN(parseFloat(n))) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно содержать число;\n";
+		}
+		else if (!isFloat && parseInt(n) <= 0) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно содержать целое число больше нуля;\n";
+		}
+		else if (isFloat && parseFloat(n) <= 0) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть больше нуля (можно использовать только цифры, разделитель дробной части - точка \".\" или запятая \",\");\n";
+		}
+		else {
+			return "";
+		}
+	}
+	else {
+		return " - поле \"" + (mes_text.toUpperCase()) + "\" не найдено;\n";
+	}
+}
+// функция проверки обязательных полей на заполнение
+function trf (form_name, element_name, mes_text) 
+{
+	// trf - test required field	
+	if (document.forms[form_name].elements[element_name]) {
+		if (string_trim(document.forms[form_name].elements[element_name].value) == "") {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		}
+		else {
+			return "";
+		};
+	}
+	else {
+		return " - поле \"" + (mes_text.toUpperCase()) + "\" не найдено;\n";
+	}
+};
+
+// проверка текстового поля по паттерну
+function tfp (form_name, element_name, mes_text, pattern, mes_pattern) 
+{
+	// trf - test field by pattern
+	if (document.forms[form_name].elements[element_name]) {
+		if (string_trim(document.forms[form_name].elements[element_name].value) == "") {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		}
+		else {
+			var pat = RegExp(pattern);			
+			if (pat) {
+				if (pat.exec(string_trim(document.forms[form_name].elements[element_name].value)) == null) {
+					return " - " + mes_pattern + "\r\n";
+				}
+				else {
+					return "";
+				};
+			}
+			else {
+				return " - не поддерживаются регулярные выражения! Обновите свой броузер!\n";
+			};			
+		};
+	}
+	else {
+		return " - поле \"" + (mes_text.toUpperCase()) + "\" не найдено;\n";
+	}
+};
+
+
+// проверка текстового поля по паттерну
+function tfpnr (form_name, element_name, mes_text, pattern, mes_pattern) 
+{
+	// trf - test field by pattern no require
+	if (document.forms[form_name].elements[element_name]) {
+		if (string_trim(document.forms[form_name].elements[element_name].value) == "") {
+			return "";
+		}
+		else {
+			var pat = RegExp(pattern);			
+			if (pat) {
+				if (pat.exec(string_trim(document.forms[form_name].elements[element_name].value)) == null) {
+					return " - " + mes_pattern + "\r\n";
+				}
+				else {
+					return "";
+				};
+			}
+			else {
+				return " - не поддерживаются регулярные выражения! Обновите свой броузер!\n";
+			};			
+		};
+	}
+	else {
+		return " - поле \"" + (mes_text.toUpperCase()) + "\" не найдено;\n";
+	}
+};
+
+/* функция проверки обязательных полей на числовое значение
+trfn - test required field numeric */
+function trfn (form_name, element_name, mes_text) {	
+	if ( document.forms[form_name].elements[element_name] ) {
+		if (document.forms[form_name].elements[element_name].value=="") {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		}
+		else {
+			if ( isNaN( document.forms[form_name].elements[element_name].value ) ) {
+				return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть числом;\n";
+			}
+			else {
+				if ( document.forms[form_name].elements[element_name].value == 0 ) {
+					return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть больше нуля;\n";
+				}
+				else {
+					return "";
+				}				
+			}
+		}
+	}
+	else {
+		return " - поле \"" + (mes_text.toUpperCase()) + "\" не найдено;\n";
+	}
+}
+
+/* функция проверки полей на числовое значение 
+tnf - test numeric field */
+function tnf (form_name, element_name, mes_text) {
+	if ( document.forms[form_name].elements[element_name] ) {
+		if (!(document.forms[form_name].elements[element_name].value=="")) {
+			if (isNaN(document.forms[form_name].elements[element_name].value)) {
+				return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть числом;\n";
+			}
+			else {
+				return "";
+			}
+		}
+		else {
+			return "";
+		}
+	}
+}
+
+/* функция проверки интервальных полей
+tnf - test interval field */
+function tif (form_name, element_min_name, element_max_name, mes_text) {
+	var a = "";
+	if (!(document.forms[form_name].elements[element_min_name].value=="")) {
+		if (isNaN(document.forms[form_name].elements[element_min_name].value)) {
+			a = a + " - не верно задан интервал (нижнее значение) " + (mes_text.toUpperCase()) + ";\n";
+		};
+	};
+	if (!(document.forms[form_name].elements[element_max_name].value=="")) {
+		if (isNaN(document.forms[form_name].elements[element_max_name].value)) {
+			a = a + " - не верно задан интервал (верхнее значение) " + (mes_text.toUpperCase()) + ";\n";
+		};
+	};
+	return a;
+};
+
+/* функция проверки полей на числовое значение 
+tddl - test drop dawn list */
+function tddl (form_name, element_name, mes_text) {
+	if (document.forms[form_name].elements[element_name].value=="") {
+		return " - поле \"" + (mes_text.toUpperCase()) + " не заполнено;\n";
+    }
+	else {
+		if (isNaN(document.forms[form_name].elements[element_name].value)) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть числом;\n";
+		}
+		else {
+            if (0 == document.forms[form_name].elements[element_name].value) {
+                return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+            } else {
+                return "";
+            }
+		}
+	}
+}
+
+function openWindow(url, w, h) {			
+	window.open(url,"_blank","width="+w+",height="+h+",scrollbars=1,resizable=1,menubar=0,toolbar=0");
+};
+
+function openWindowMenu(url, w, h) {			
+	window.open(url,"_blank","width="+w+",height="+h+",scrollbars=1,resizable=1,menubar=1,toolbar=0");
+};
+function openImage(url, w, h) {			
+	window.open(url,"_blank","width="+w+",height="+h+",scrollbars=0,resizable=0,menubar=0,toolbar=0");
+};
+
+
+function getRadioValue(radioObject) {	
+	var value = null;
+	if (radioObject) {
+		if (radioObject.length) {
+			for (var i=0; i<radioObject.length; i++) {
+				if (radioObject[i].checked) {
+					value = radioObject[i].value;
+					break;
+				};
+			};
+		}
+		else {
+			value = (radioObject.value);
+		};		
+	};	
+	return value;
+}
+
+// функция возвращает выбранные элементы списка в виде строки с разделителем
+function getSelectionValues(objectName,separator) {
+	if (objectName) {
+		var list=new Array();
+		for (var i=0; i<objectName.length;i++) {
+			if (objectName.options[i].selected && objectName.options[i].value!=0) {
+				list.push(objectName.options[i].value);
+			};
+		};
+		return list.join(separator);
+	}
+} 
+
+function SubmitFormQS(formAction, formName, navigationType) {	
+	if (formName) {	
+		var num=document.forms[formName].elements.length;
+		var resultUrl = new Array();
+		var resultUrlAssociat = new Array();
+		var multiVal="";
+		var prefix;
+		if (navigationType==1) {
+			prefix="?";
+		}
+		else {
+			prefix="&";
+		}
+		for (var i=0; i<num; i++) {			
+			if (document.forms[formName].elements[i].length) {
+				multiVal=getSelectionValues(document.forms[formName].elements[i],"-");
+				if (multiVal!="") {
+					resultUrl.push(document.forms[formName].elements[i].name);
+					resultUrl.push(multiVal);
+				}				
+			}
+			else {
+				if (
+					(document.forms[formName].elements[i].value=="") || 
+					(document.forms[formName].elements[i].value==null) || 
+					(document.forms[formName].elements[i].value==0) || 
+					(document.forms[formName].elements[i].name=="") ||				
+					(typeof document.forms[formName].elements[i]=="button") || 
+					(typeof document.forms[formName].elements[i]=="submit") || 
+					(typeof document.forms[formName].elements[i]=="reset") 
+					) {
+				}
+				else {
+					if ( (document.forms[formName].elements[i].type.toLowerCase())=="checkbox") {
+						if (document.forms[formName].elements[i].checked) {
+						resultUrl.push(document.forms[formName].elements[i].name);
+						resultUrl.push(1);
+						}
+					}
+					else {						
+						resultUrl.push(document.forms[formName].elements[i].name);
+						resultUrl.push(document.forms[formName].elements[i].value);
+					}
+				}					
+			}			
+		}
+
+		var build_url=resultUrl.join("/");
+		if (build_url!="") {
+			document.forms[formName].action=formAction+prefix+"query="+build_url;
+		}
+		else {
+			document.forms[formName].action=formAction;
+		}		
+		document.forms[formName].submit();
+	}
+}
+
+function getUrlFromForm(formAction, formName)
+{
+	var strUrlResult = '';
+	if ( formName ) {	
+		var num = document.forms[formName].elements.length;
+		var resultUrl = new Array();
+		var resultUrlAssociat = new Array();
+		var multiVal = '';
+		var prefix = '?';
+
+		for ( var i=0; i<num; i++ ) {
+			if ( document.forms[formName].elements[i].length ) {
+				multiVal = getSelectionValues(document.forms[formName].elements[i], '-');
+				if ( multiVal != '' ) {
+					resultUrl.push( document.forms[formName].elements[i].name );
+					resultUrl.push( multiVal );
+				}
+			}
+			else {
+				if (
+					(document.forms[formName].elements[i].value=="") || 
+					(document.forms[formName].elements[i].value==null) || 
+					(document.forms[formName].elements[i].value==0) || 
+					(document.forms[formName].elements[i].name=="") ||				
+					(typeof document.forms[formName].elements[i]=="button") || 
+					(typeof document.forms[formName].elements[i]=="submit") || 
+					(typeof document.forms[formName].elements[i]=="reset") 
+					) {
+				}
+				else {
+					if ( (document.forms[formName].elements[i].type.toLowerCase())=="checkbox") {
+						if (document.forms[formName].elements[i].checked) {
+						resultUrl.push(document.forms[formName].elements[i].name);
+						resultUrl.push(1);
+						}
+					}
+					else {						
+						resultUrl.push(document.forms[formName].elements[i].name);
+						resultUrl.push(document.forms[formName].elements[i].value);
+					}
+				}					
+			}			
+		}
+
+		var strUrl = resultUrl.join("/");
+		if ( strUrl != '' ) {
+			strUrlResult = formAction + prefix + 'query=' + strUrl;
+		}
+		else {
+			strUrlResult = formAction;
+		}		
+	}
+	return strUrlResult;
+}
+
+function switchMap(formName, strType)
+{
+	document.forms[formName].elements['s'].value = 0;
+	if ( strType == 'on' ) {
+		document.forms[formName].elements['ft'].value = 1;
+	}
+	else {	
+		document.forms[formName].elements['ft'].value = 0;
+	}
+	return true;
+}
+
+
+// функция возвращает выбранные элементы списка в виде строки с разделителем
+function getSelectionValues(objectName,separator) {	
+	if (objectName) {
+		var list=new Array();
+		for (var i=0; i<objectName.length;i++) {
+			if (objectName.options[i].selected && objectName.options[i].value!=0) {
+				list.push(objectName.options[i].value);
+			};
+		};
+		return list.join(separator);
+	}	
+}
+
+// функция устанавливает выбранный элемент в выпадающем списке
+function setSelection(objectName, selectedValue) {
+	selIndex = 0;
+	if (objectName) {
+		var list = new Array();
+		for (var i=0; i < objectName.length; i++) {
+			if (objectName.options[i].value == selectedValue) {
+				selIndex = i;
+			};
+		};
+	}	
+	return selIndex;
+}
+
+// 
+function string_trim(str) {
+	return str.replace(/^\s+/, '').replace(/\s+$/, '');
+}
+
+function string_test_email(email) {
+	emailTest = "^[_\\.0-9a-z-]+@([0-9a-z][0-9a-z_-]+\\.)+[a-z]{2,4}$";
+	var regex = new RegExp(emailTest);
+	if (!regex.test(email) || !(email.length > 0)) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+function string_test_pattern(text, pattern, message_about_pattern)
+{
+	var pat = RegExp(pattern);
+	if (pat) {
+		if (pat.exec(text) == null) {
+			alert(message_about_pattern);
+			return false;
+		}
+		else {
+			return true;
+		};
+	}
+	else {
+		alert("- установленная версия JavaScript не поддерживает регулярные выражения, заполнение формы невозможно!!!\r\n");
+		return false;
+	}
+}
+
+function itemShowAndHide(itemName) {
+	if (document.getElementById(itemName)) {
+		if (document.getElementById(itemName).style.display == 'block') {
+			document.getElementById(itemName).style.display = 'none';
+		}
+		else {
+			document.getElementById(itemName).style.display = 'block';
+		}
+	}
+	return false;
+};
+
+function testLogin(formName)
+{
+	var em = "";
+
+	em+= trf(formName, "login", "Логин");	
+	em+= trf(formName, "pass", "Пароль");
+
+	if (em == "") {
+		document.forms[formName].submit();				
+	}
+	else {
+		em = "Форма заполнена неверно!\r\n" + em;
+		alert(em);
+	}
+	return true;
+}
+
+function startSearch(formName, elementName)
+{
+	var strQuery = "";
+	if (document.forms[formName] && document.forms[formName].elements[elementName]) {
+		strQuery = document.forms[formName].elements[elementName].value;
+		if ( strQuery == '') {
+			alert('Не задан текст запроса!');
+		}
+		else {
+			location.href='/search/?query=search/' + encodeURI(strQuery);
+		}
+	}
+}
+
+function testFormComment(formName, actionType)
+{
+	var em = "";
+	
+	em+= trf(formName, "comment_person", "имя");
+	em+= trf(formName, "comment_text", "текст сообщения");	
+	if ( actionType == 'guest' ) {
+		em+= trf(formName, "ccode", "Контрольный код");
+	}
+
+	if (em == "") {
+		document.forms[formName].submit();				
+	}
+	else {
+		em = "Форма заполнена неверно!\r\n" + em;
+		alert(em);
+	}
+	return true;
+}
+
+function updateCaptcha(strIdImage)
+{
+	var elementImage = document.getElementById(strIdImage);
+	var n = 100;
+	var m = 1;
+	if (elementImage) {
+		if ( typeof(Math) != "undefined" ) {
+			elementImage.src = '/captcha/?upd=' + Math.floor(Math.random( ) * (n - m + 1)) + m;
+		}
+		else {
+			elementImage.src = '/captcha/';
+		}
+	}
+	return true;
+}
+
+function testFormFoget(formName) 
+{
+	var em = "";	
+	em+= trf(formName, "email", "email");
+	if (em == "") {
+		document.forms[formName].submit();				
+	}
+	else {
+		em = "Форма заполнена неверно!\r\n" + em;
+		alert(em);
+	}
+	return true;
+}
+
+function checkAll(flag, strForm, strElementName)
+{
+	var field = document.forms[strForm].elements[strElementName];
+	
+	if (field && field.length) {
+		for (i = 0; i < field.length; i++) {
+			field[i].checked = flag;
+		}
+	};
+	return true;
+};
+
+function addVoice(strForm, strElementName)
+{
+	var field = document.forms[strForm].elements[strElementName];
+	var intResult = 0;
+	
+	if (field && field.length) {
+		for (i = 0; i < field.length; i++) {
+			if (field[i].checked) {
+				intResult = field[i].value;				
+			}
+		}		
+	}
+	
+	if ( intResult > 0 ) {
+		document.forms[strForm].submit();
+	}
+	else {
+		alert('Укажите вариант ответа!');
+	}
+	
+	return true;
+}
+
+function testFormLinkPublic(formName)
+{
+	var em = "";
+
+	em+= tddl(formName, "id_section", "раздел");
+	em+= trf(formName, "link_site_name", "название вашего сайта");
+	em+= trf(formName, "link_url", "ссылка на ваш сайт");
+	em+= trf(formName, "ccode", "контрольный код");
+	
+	if (em == "") {
+		document.forms[formName].submit();				
+	}
+	else {
+		em = "Форма заполнена неверно!\r\n" + em;
+		alert(em);
+	}
+	return true;
+}
