@@ -1,0 +1,786 @@
+function moreObjects(url, resultDiv)
+{
+	jQuery('#' + resultDiv).html('Идет загрузка данных...');
+	if ( typeof(jQuery) != "undefined" ) {
+		jQuery.post(url, {}, function(data) { jQuery('#' + resultDiv).html(data); });
+	}
+	else { // не загружена библиотека AJAX
+
+	}
+}
+function showGoogleMap(s)
+{
+	var u = "";
+	var w = 640;
+	var h = 480;
+	u = "/spb/term/map/view_google_one.php?d=" + s;
+	window.open(u, "_blank","width="+w+",height="+h+",scrollbars=0,resizable=0,menubar=0,toolbar=0");
+};
+function addComment(intIdObject, intIdBase)
+{
+	var elComment = document.getElementById('newcomment');
+	var strComment = '';
+
+	if (jQuery && elComment) {
+		strComment = elComment.value;
+		if ( strComment != '' ) {
+			$("#example1").html('Обновление данных...')
+			jQuery.post('/ajax/getcomments/' + intIdObject + '.html?query=base/' + intIdBase, {comment: strComment, id_base: intIdBase, id_object: intIdObject}, onAjaxSuccess_addComment);
+		}
+	};
+	return false;
+}
+function onAjaxSuccess_addComment(data) { $('#example1').html(data); };
+function updateSelect(strIdSelect, strData, strSepField, strSepRow, strSelectedValue)
+{
+    var objSelect = document.getElementById(strIdSelect);
+	var boolResult = false;
+	if ( ( objSelect ) && ( strData.length > 0 ) ) {
+
+		objSelect.options.length = 0;
+		var arRows = strData.split(strSepRow); // массив строк
+		for (var i = 0; i < arRows.length; i++) {
+			arValue = arRows[i].split(strSepField); // массив значений
+			objSelect.options[objSelect.options.length] = new Option(arValue[1], arValue[0], false, false);
+		}
+
+		if ( strSelectedValue != '' ) {
+			jQuery('#' + strIdSelect + ' option[value="' + strSelectedValue + '"]').attr('selected', 1);
+		}
+
+		objSelect.disabled = (objSelect.options.length==1);
+		objSelect.style.backgroundColor = (objSelect.options.length==1)? 'silver': 'white';
+
+		boolResult = true;
+	}
+	//jQuery(objSelect).trigger("change");
+	return boolResult;
+}
+function updateSelectAjax(strUrl, strResultSelect, strSelectedValue)
+{
+	updateSelect(strResultSelect, '0;загрузка данных...', ';', '\n');
+	//if ( !jQuery.post(strUrl, {}, function(data) { updateSelect(strResultSelect, data, ';', '\n', strSelectedValue); }) ) {
+	if ( !jQuery.get( strUrl, {}, function(data) { updateSelect(strResultSelect, data, ';', '\n', strSelectedValue); }) ) {
+		alert('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!');
+	}
+	return true;
+}
+
+function updSearch(intIdReg, intIdDept, intIdDist, intIdStreet, intIdStation)
+{
+	try {
+
+		if(intIdReg == null) intIdReg = document.getElementById("selectReg").value || 0;
+		if(intIdDept == null) intIdDept = document.getElementById("selectDept").value || 0;
+		if(intIdDist == null) intIdDist = document.getElementById("selectDist").value || 0;
+		if(intIdStreet == null) intIdStreet = document.getElementById("selectStreet").value || 0;
+		if(intIdStation == null) intIdStation = document.getElementById("selectStation").value || 0;
+
+		jQuery('#selectReg option[value="' + intIdReg + '"]').attr('selected', 1);
+
+		if(!jQuery.ajax({
+			url: '/ajax/getfulladdr/'+intIdReg+'.html?query=dept/'+intIdDept+'/dist/'+intIdDist+'&rnd='+Math.random(),
+			type: 'GET',
+			dataType: 'json',
+			success: function(data) {
+				for(var i in data) {
+					var sel = jQuery("#"+i), u = data[i];
+					sel.html('').attr('disabled', u.length == 1).css('background', u.length == 1? 'silver': 'white');
+					for(var j=0, n=u.length; j<n; j++) {
+						sel.append(jQuery("<option value="+u[j][0]+"></option>").text(u[j][1] == null? '-- не указано --': u[j][1]));
+					}
+					//sel.trigger('change')
+				}
+
+				jQuery("#selectDept option[value="+intIdDept+"]").attr('selected', 1);
+				jQuery("#selectDist option[value="+intIdDist+"]").attr('selected', 1);
+				jQuery("#selectStreet option[value="+intIdStreet+"]").attr('selected', 1);
+				jQuery("#selectStation option[value="+intIdStation+"]").attr('selected', 1);
+
+				if ( intIdDept == 2 ) {
+					jQuery('#labelSelectStation').html('<strong>Метро</strong>');
+					jQuery('#labelSelectDist').html('Район');
+				}
+				else {
+					jQuery('#labelSelectStation').html('Ж/д станция');
+					jQuery('#labelSelectDist').html('Нас.пункт');
+				}
+
+				jQuery('#searchAddressResult').hide();
+				jQuery('#fieldSearchAddress').val('');
+			},
+			error: function() {
+				alert_modal('Сервер не отвечает, попробуйте обновить страницу!');
+			}
+		})) {
+			alert_modal('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!');
+		}
+
+
+	} catch(e) { alert_modal('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!') }
+}
+// init
+var iTimeoutId = null; // переменная для хранения интервала
+var currentOpen = null; // название последнего открытого слоя
+
+/* функция отправляет запрос к серверу */
+function searchAddress(obj_event)
+{
+	obj_event = obj_event || window.event;
+	txt_field = obj_event.target || obj_event.srcElement;
+
+	if (iTimeoutId != null) {
+		clearTimeout(iTimeoutId);
+		iTimeoutId = null;
+	}
+
+	var sObj = new String(txt_field.value);
+	if (sObj.length > 1) {
+		iTimeoutId = setTimeout("on_time(txt_field)", 500);
+	}
+}
+
+
+/* функция обработки собития таймера */
+function on_time(sea, regValue) {
+    if (typeof(sea) != 'object') {
+        alert_modal('Не указана строка для поиска!');
+        return false;
+    }
+
+    var searchStr = (typeof(sea.val) == 'function') ? sea.val() : sea.value;
+
+    if (searchStr.toString().length <= 2) {
+        alert_modal('Поиск ведется по 3-м и более символам!');
+        return false;
+    }
+
+    if (!jQuery.post('/ajax/searchaddress/?query=reg/' + regValue,
+            {sa: searchStr},
+            function (data) {
+                jQuery('#searchAddressResult').html(data).show();
+            })
+    ) {
+        alert_modal('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!');
+        return false;
+    }
+
+    return true;
+}
+
+/* функция заменяет запятые */
+function replaceComma(strInput) {
+	var strResult = strInput;
+	var objString = new String(strInput);
+	var arTmp = new Array();
+	if ( objString.length > 0 ) {
+		arTmp = objString.split(",");
+		strResult = arTmp.join(".");
+		arTmp = strResult.split(" ");
+		strResult = arTmp.join("");
+	}
+	return strResult;
+}
+function testVideoLink(strFormName) {
+    if (document.forms[strFormName].elements['video'].value != '' ) {
+        return tfpnr(strFormName, "video", "Ссылка на видео", '^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?.*?(?:v|list)=(.*?)(?:&|$)|^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?(?:(?!=).)*\/(.*)$', 'поле "ВИДЕО" - допускается видео только с youtube.com');
+    }
+    return '';
+}
+
+/* обновляет поля на форме новостройки */
+function updateFieldsByIdHouse(intIdHouse)
+{
+	var objSelectTypeHouse = document.getElementById('k_building_dom');
+	if (jQuery) {
+		jQuery("#updFields").html('Запрос данных с сервера...');
+		jQuery.getJSON('/ajax/gethouseinfo/' + intIdHouse + '.html', {params: "text"}, function(obj) {
+			document.getElementById('adres').value = obj.adres;
+			document.getElementById('sadres').value = obj.sadres;
+			document.getElementById('levels').value = obj.levels;
+			document.getElementById('k_building_dom').selectedIndex = setSelection(document.getElementById('k_building_dom'), obj.k_building_dom);
+			document.getElementById('kvdate_end').selectedIndex = setSelection(document.getElementById('kvdate_end'), obj.kvdate_end);
+			document.getElementById('selectStationHowGet').selectedIndex = setSelection(document.getElementById('selectStationHowGet'), obj.stationHowGet);
+			updSearch(obj.reg, obj.dept, obj.dist, obj.street, obj.station);
+		} );
+		jQuery('#updFields').html('');
+	}
+	else {
+		alert('Не удалось получить данные с сервера! Заполните поля вручную!');
+	}
+}
+/* функция строит окно с этажами */
+function showSelectWindow(strSelected, strTextValues, fieldName, fieldResult, fieldCount, formName)
+{
+	var l = document.forms[formName].elements[fieldCount].value;
+	if (document.forms[formName].elements[fieldResult].value!="") {
+		strSelected=document.forms[formName].elements[fieldResult].value;
+	}
+	if (l=="")
+	{
+		alert("поле \"" + (fieldName.toUpperCase()) + "\" не заполнено;\n");
+	}
+	else {
+		if (isNaN(l)) {
+			var s = new Array();
+			s=l.split("-");
+			max_floor_ind=s.length-1;
+			l=s[max_floor_ind];
+			if (l>0) {
+				openWindow('/spb/term/CheckBoxWindowFloors.php'+'?c='+l+'&r='+fieldResult+'&t='+strTextValues+'&s='+strSelected,200,400);
+			}
+			else {
+				alert("поле \"" + (fieldName.toUpperCase()) + "\" должно быть числом;\n");
+			}
+		}
+		else {
+			if (l>0) {
+				openWindow('/spb/term/CheckBoxWindowFloors.php'+'?c='+l+'&r='+fieldResult+'&t='+strTextValues+'&s='+strSelected,200,400);
+			}
+			else {
+				alert("поле \"" + (fieldName.toUpperCase()) + "\" должно быть больше нуля;\n");
+			}
+		};
+	};
+}
+
+// Если тип объекта: дача, зимний дом, коттедж, часть дома, таунхауз, то:
+// Поле "общая площадь" - обязательно к заполнению
+function required_zSAll(strFormName) {
+	try {
+		return document.forms[strFormName || "reoForm"].zTypeObject.value in {2:1,3:1,5:1,6:1,7:1}
+	} catch(e) {
+		return false;
+	}
+}
+
+
+try {
+
+	if(/\bpageID=10[23]\b/.test(location.search))
+		document.addEventListener("DOMContentLoaded", function() {
+			var form = document.forms["reoForm"];
+			var object = form.zTypeObject;
+			var sall = form.zSAll;
+			var label = sall.parentNode.previousSibling;
+			while(label && label.nodeType != 1) label = label.previousSibling;
+
+			var check = function() {
+				label.style.fontWeight = required_zSAll()? '700': '';
+			}
+			if(label) {
+				object.addEventListener("change", check);
+				check();
+			}
+		});
+} catch(e) {
+}
+
+/* получение таблицы статистики */
+function getStatTable(strIdDiv, strUrl)
+{
+	if (jQuery) {
+        yaCounter13320217.reachGoal('quick_stats');
+
+		jQuery("#" + strIdDiv).html('Запрос данных с сервера...');
+		jQuery.post(strUrl, {}, function(data) { jQuery('#' + strIdDiv).html(data); } );
+	}
+	else {
+		alert('Не удалось получить данные с сервера!');
+	}
+}
+/* функция показывает форму коментирования в терминале */
+function commentFormShow(intIdObject, intIdBase, strDivName, strRefresh)
+{
+	if (jQuery) {
+		jQuery("#" + strDivName).html('секундочку...');
+		jQuery.get('/ajax/getformcomment/' + intIdObject + '.html?query=base/' + intIdBase + '/refresh/' + strRefresh, {}, function(data) { jQuery("#" + strDivName).html(data); } );
+	}
+	else {
+		errorNoSupportJQuery();
+	}
+	return true;
+}
+/* функция прячет форму коментирования в терминале */
+function commentFormHide(strDivName)
+{
+	if (jQuery) {
+		jQuery("#" + strDivName).html('');
+	}
+	else {
+		errorNoSupportJQuery();
+	}
+	return true;
+}
+/* функция проверяет и добавляет комментарий */
+function commentAdd(intIdObject, intIdBase, strDivName, strTextareaName)
+{
+	if (jQuery) {
+		var strText = jQuery('#' + strTextareaName).val();
+		if ( strText == '' ) {
+			alert('Введите текст!');
+		}
+		else {
+			jQuery.post('/ajax/addcomment/' + intIdObject + '.html?query=base/' + intIdBase, {commentText: strText}, function(data) { jQuery("#" + strDivName).html(data); } );
+		}
+	}
+	else {
+		errorNoSupportJQuery();
+	}
+}
+/* ошибка загрузки jQuery */
+function errorNoSupportJQuery()
+{
+	alert('Извините, не загружена библиотека jQuery');
+}
+
+// modal
+function modal_set_center() {
+	var int_height_div = jQuery('#modal_centred').height();
+	var int_height_window = window_get_height();
+	var int_margin_top = Math.round( ( int_height_window - int_height_div ) / 2 );
+	jQuery('#modal_centred').css('margin-top', int_margin_top + 'px');
+	return false;
+}
+function modal_close() {
+	jQuery('#modal_background').hide();
+	jQuery('#modal_container').hide();
+	jQuery('#modal_buttons').html('');
+	return false;
+}
+function modal_show( strSubject, strDescr, ar_btns ) {
+	jQuery('#modal_background').show();
+	jQuery('#modal_container').show();
+	jQuery('#modal_subject').html( strSubject );
+	jQuery('#modal_descr').html( strDescr );
+	jQuery('#modal_buttons').show();
+	jQuery('#modal_buttons').html('');
+	for( var i = 0; i < ar_btns.length; i++ ) {
+		var h_btn = el_create( 'button' );
+		h_btn.id = ar_btns[i].id;
+		h_btn.innerHTML = ar_btns[i].text;
+		h_btn.onclick = ar_btns[i].callback;
+		var h_div = el_get('modal_buttons');
+		h_div.appendChild( h_btn );
+	}
+	modal_set_center();
+	return false;
+}
+function el_create( str_tag, ar_attr ) {
+	var element = document.createElement( str_tag );
+	return element;
+}
+function el_get( str_name ) {
+	return document.getElementById( str_name );
+}
+function el_append( str_name, h_el ) {
+	var element = document.getElementById( str_name );
+	return element.appendChild( h_el );
+}
+function window_get_height() {
+	var int_height = jQuery(window).height();
+	if ( int_height > 1024 ) {
+		return window.screen.height || window.screen.availHeight;
+	}
+	else {
+		return int_height;
+	}
+}
+function show_error( str_mes )
+{
+	if ( str_mes == '' ) {
+		str_mes = 'Извините, произошла какая то ошибка.';
+	}
+	modal_show( 'Ошибка', str_mes, [ { id: 'id_btn_close', text: 'закрыть', callback: modal_close } ] );
+	return false;
+}
+function show_loader( str_headline )
+{
+	jQuery('#modal_subject').html( str_headline );
+	jQuery('#modal_descr').html( '<img src="/images/loader-1.gif" id="loader" />' );
+	jQuery('#modal_buttons').hide();
+	return false;
+}
+function hide_loader( str_headline, str_descr, ar_btns )
+{
+	jQuery('#modal_subject').html( str_headline );
+	jQuery('#modal_descr').html( str_descr );
+	jQuery('#modal_buttons').html( '' );
+	for( var i = 0; i < ar_btns.length; i++ ) {
+		var h_btn = el_create( 'button' );
+		h_btn.id = ar_btns[i].id;
+		h_btn.innerHTML = ar_btns[i].text;
+		h_btn.onclick = ar_btns[i].callback;
+		var h_div = el_get('modal_buttons');
+		h_div.appendChild( h_btn );
+	}
+	jQuery('#modal_buttons').show();
+	return false;
+}
+function generate_search_url( str_form_action, str_form_name )
+{
+	var num = document.forms[str_form_name].elements.length;
+	var ar_url = new Array();
+
+	// обрабатываем переменные
+	for ( var i=0; i < num; i++ ) {
+		bool_is_empty = ( document.forms[str_form_name].elements[i].value == "" ); // пустое
+		bool_is_empty = bool_is_empty || ( document.forms[str_form_name].elements[i].value == 0 ); // ноль
+		if ( !bool_is_empty ) {
+		ar_url.push( document.forms[str_form_name].elements[i].name + '/' + document.forms[str_form_name].elements[i].value );
+		}
+	}
+	// формируем url
+	var str_url = ar_url.join( '|' );
+	if ( str_url == '' ) {
+		str_url = str_form_action;
+	}
+	else {
+		str_url = str_form_action + '&search_url=' + str_url;
+	}
+
+	// делаем редирект
+	location.href = str_url;
+}
+
+function cutText(elTextarea, intMaxLength)
+{
+    if ( elTextarea && (elTextarea.value != '') ) {
+        var strText = elTextarea.value;
+        if ( strText.length > intMaxLength ) {
+            elTextarea.value = strText.substr(0, intMaxLength );
+        }
+    }
+    return true;
+}
+function clickQuickSale(base) {
+    var flag_error = 0;
+    var balance = 0;
+    var balance_master = 0;
+    var rub = 0;
+    var c_flats = 0;
+    var c_rooms = 0;
+    var c_farm = 0;
+    var c_build = 0;
+    var c_kn = 0;
+    var c_renta = 0;
+    var ajaxOk = function() {
+        jQuery.ajax({
+            url: '/spb/term/ajax_banner_click.php',
+            method: 'POST',
+            data: {'name': 'TA_need_calls_button'}
+        });
+        jQuery.ajax({
+            url: '/spb/term/?pageID=1081&ajax=2&idbase=' + base,
+            type: "GET",
+            async: false,
+            dataType: "json",
+            success: function ( response ) {
+                if( response.count > 0 ) {
+                    alert_modal( "Подано на размещение " + response.count + " об." );
+                } else {
+                    alert_modal( "Реклама уже подана" );
+                }
+            }
+        });
+    };
+
+    var base_goal = 'boom_click_all';
+    if (base == 1) base_goal = 'boom_click_flats';
+    else if (base == 2) base_goal = 'boom_click_rooms';
+    else if (base == 3) base_goal = 'boom_click_zagorod';
+    else if (base == 4) base_goal = 'boom_click_newbuild';
+    else if (base == 5) base_goal = 'boom_click_com';
+    yaCounter13320217.reachGoal(base_goal);
+
+    jQuery.ajax({
+        url: '/spb/term/?pageID=1081&ajax=1&idbase=' + base,
+        type: "GET",
+        async: false,
+		dataType: "json",
+        success: function ( response ) {
+			if( response.success ) {
+			} else {
+                flag_error = response.error;
+            }
+            jQuery.each(response.result, function(i, b) {
+                if (b.base == 1) c_flats = b.count;
+                else if (b.base == 2) c_rooms = b.count;
+                else if (b.base == 3) c_farm = b.count;
+                else if (b.base == 4) c_build = b.count;
+                else if (b.base == 5) c_kn = b.count;
+                else if (b.base == 7) c_renta = b.count;
+            });
+            rub = response.price;
+            balance = response.balance_billing;
+            balance_master = response.balance_masterschet;
+        }
+    });
+
+    var str = '';
+    if (c_flats > 0) str = str + "\n - квартир (" + c_flats + " об.)";
+    if (c_rooms > 0) str = str + "\n - комнат (" + c_rooms + " об.)";
+    if (c_farm > 0) str = str + "\n - загород (" + c_farm + " об.)";
+    if (c_build > 0) str = str + "\n - новостройки (" + c_build + " об.)";
+    if (c_kn > 0) str = str + "\n - коммерческая (" + c_kn + " об.)";
+    if (c_renta > 0) str = str + "\n - аренда (" + c_renta + " об.)";
+    if (flag_error == 1) {
+        str = str + "\n\n<b>Не хватает средств на счете (надо " + rub + " руб.)</b>";
+        if (balance > 0) str = str + "\nБаланс счета " + balance + " руб.";
+        if (balance_master > 0) str = str + "\nБаланс мастер-счета " + balance_master + " руб.";
+        if (balance_master == 0) str = str + "\n<a href='?pageID=1017'>Пополнить счет</a>";
+        else str = str + "\n<a href='?pageID=1017&type=master'>Пополнить мастер-счет</a>";
+        alert_modal("Пакетное размещение cian+emls 'ТОП-3' на сутки всех активных:\n" + str);
+    }
+    else {
+        str = str + "\n\nза <b>" + rub + " руб.</b>";
+        confirm_modal("Пакетное размещение cian+emls 'ТОП-3' на сутки всех активных:\n" + str, ajaxOk, function() { alert_modal( "Размещение отменено." ); } );
+    }
+}
+
+function clickReclamMarkObject(base) {
+    var addVasFromPackage;
+    var baseUrl = '/spb/term/?';
+    var params = {
+        'pageID': 1081,
+        'idbase': base,
+		'ajax': 3,
+    };
+    var categoryName = {
+    	1: 'Квартиры',
+    	2: 'Комнаты',
+    	3: 'Дома, участки',
+    	4: 'Новостройки',
+    	5: 'Коммерческая аренда',
+    	6: 'Коммерческая продажа',
+    	7: 'Аренда',
+    	9: 'Любая категория',
+	};
+
+    function send(params, callback) {
+        jQuery.ajax({
+            url: baseUrl + jQuery.param(params),
+            type: "GET",
+            async: false,
+            dataType: "json",
+            success: function (response) {
+                callback(response);
+            }
+        })
+    }
+
+    var actionSelectModal = function (response) {
+        if (response.success) {
+            confirm_modal(response.data, confirmAction, null, null, null, true);
+            addVasFromPackage = jQuery('.add_vas_from_package');
+
+            jQuery('[name="modal_type_vas"]').click(function () {
+                params.izdanie = this.value;
+                if (addVasFromPackage.length > 0) {
+                    params.ajax = 6;
+                    send(params, updateFreePackages);
+                }
+            });
+
+            jQuery('[name="modal_type_vas"]:first').prop("checked", true).trigger("click");
+
+            jQuery('#nday').change(function () {
+                params.numberOfDays = this.value;
+                var checkedOption = jQuery(this).find('option:checked');
+                var numberOfDays = checkedOption.val() == 9999 ? 1 : checkedOption.val();
+                jQuery('.vas-price').each(function () {
+                	var price = jQuery(this);
+                    price.text(price.data('price') * numberOfDays);
+                });
+
+                jQuery('.vas-days-count').text(checkedOption.text());
+            }).trigger('change');
+        } else {
+            alert_modal('Вы не выбрали ни одного объекта');
+        }
+    };
+
+    var updateFreePackages = function (response) {
+        if (!response.success) {
+            return;
+        }
+        var html = [];
+        if (response.data) {
+            var length = response.data.vasPacks.length;
+        } else {
+            var length = 0;
+        }
+        for (var i = 0; i < length; i++) {
+            var vasPack = response.data.vasPacks[i];
+            if (vasPack.count === 0) {
+                html.push('В категории нет свободных пакетов для объектов');
+                addVasFromPackage.prop("disabled", true);
+            } else if (vasPack.freeObjectsCount === 0) {
+                html.push('В категории нет свободных мест для объектов');
+                addVasFromPackage.prop("disabled", true);
+            } else {
+                html.push('Количество активных пакетов в категории "' + categoryName[vasPack.categoryId] + '": ' + vasPack.count);
+                html.push('Свободных мест для объектов: ' + vasPack.freeObjectsCount);
+                addVasFromPackage.prop("disabled", false);
+            }
+        }
+        jQuery('.modal-vas-packages').html(html.join('<br>'));
+    };
+
+    var confirmAction = function () {
+        if (addVasFromPackage.prop('checked')) {
+        	params.ajax = 8;
+            send(params, confirmAddingObjectInPackages);
+        } else {
+            params.ajax = 4;
+            send(params, confirmAddingObjectsForMoney);
+        }
+    };
+
+    var confirmAddingObjectsForMoney = function (response) {
+        if (response.success) {
+            confirm_modal(response.data, addingObjectForMoney, null, 'Заказать', 'Отмена', true);
+        }
+    };
+
+    var confirmAddingObjectInPackages = function (response) {
+        if (response.success) {
+            confirm_modal(response.data, addingObjectInPackages, null, 'Заказать', 'Отмена', true);
+        }
+    };
+
+    var addingObjectForMoney = function () {
+        params.ajax = 5;
+        params.reclam_oplatatype = jQuery('#reclam_oplatatype:checked').val();
+        send(params, endAdding);
+    };
+
+    var addingObjectInPackages = function () {
+        params.ajax = 7;
+        send(params, endAdding);
+    };
+
+    var endAdding = function (response) {
+    	var text;
+        if (response.success) {
+            if (!!response.data) {
+                text = response.data;
+            } else {
+                text = "Реклама подана.<br>";
+            }
+            if(typeof yaCounter13320217 !== 'undefined'){
+                yaCounter13320217.reachGoal('buy_reclam_mark_object');
+			}
+        } else {
+            text = "Ошибка: размещение не осуществлено";
+        }
+        alert_modal(text, 'Внимание');
+    };
+
+    send(params, actionSelectModal);
+}
+
+function clickPlaceMarkedObjects(userId, userName, isOperator, isRentaAllowed, showPaymentTypeChoice)
+{
+    var baseUrl = '/spb/term/?';
+    var getSelectedObjectsParams = {
+        'pageID': 1081,
+        'ajax': 9,
+        'idbase': _global_int_base,
+    };
+    var selectedObjects = [];
+    jQuery.ajax({
+        url: baseUrl + jQuery.param(getSelectedObjectsParams),
+        type: "GET",
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            selectedObjects = Array.from(response.data);
+        }
+    });
+    if (selectedObjects.length === 0) {
+        alert_modal('Вы не выбрали ни одного объекта');
+        return;
+    }
+    bulkPlacement(userId, selectedObjects, userName, isOperator, isRentaAllowed, showPaymentTypeChoice);
+}
+
+/* функция обработки события таймера для поиска описания дома */
+function on_time_house(intStreet, strHN, strHK, strHL, regValue)
+{
+	if (intStreet > 0 && strHN.length > 0) {
+		if ( !jQuery.post('/ajax/searchhouse/?query=reg/' + regValue, { intStreet: intStreet, strHN: strHN, strHK: strHK, strHL: strHL }, function(data) { jQuery('#searchHouseResultData').html(data); jQuery('#searchHouseResult').show(); }) ) {
+			alert_modal('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!');
+		}
+	}
+	else {
+		alert_modal('Не введен адрес (улица, дом)!');
+	}
+}
+/* функция создания ссылки при выборе описания дома */
+function updSearchHouse(intIdReg, intIdtypeHouse, intIdhouseMaterial, intIdtypeEnter, floatFirstFloorHeight, intFloorAll, intIdlift, intIdrefuseChute, intYearBuild, intYearCapitalRepair)
+{
+	try {
+
+		if(intIdReg == null) intIdReg = document.getElementById("selectReg").value || 0;
+		if(intIdtypeHouse == null) intIdtypeHouse = document.getElementById("selectTypeHouse").value || 0;
+		if(intIdhouseMaterial == null) intIdhouseMaterial = document.getElementById("selectHouseMaterial").value || 0;
+		if(intIdtypeEnter == null) intIdtypeEnter = document.getElementById("selectTypeEnter").value || 0;
+		if(intIdlift == null) intIdlift = document.getElementById("selectLift").value || 0;
+		if(intIdrefuseChute == null) intIdrefuseChute = document.getElementById("selectRefuseChute").value || 0;
+		if(floatFirstFloorHeight == null || floatFirstFloorHeight == 0) floatFirstFloorHeight = '';
+		if(intFloorAll == null || intFloorAll == 0) intFloorAll = '';
+		if(intYearBuild == null || intYearBuild == 0) intYearBuild = '';
+		if(intYearCapitalRepair == null || intYearCapitalRepair == 0) intYearCapitalRepair = '';
+
+		if(!jQuery.ajax({
+			url: '/ajax/getfullhouse/'+intIdReg+'.html?query=type/'+intIdtypeHouse+'/material/'+intIdhouseMaterial+'/enter/'+intIdtypeEnter+'/lift/'+intIdlift+'/furechute/'+intIdrefuseChute+'&rnd='+Math.random(),
+			type: 'GET',
+			dataType: 'json',
+			success: function(data) {
+
+				for(var i in data) {
+					var sel = jQuery("#"+i), u = data[i];
+					sel.html('').attr('disabled', u.length == 1).css('background', u.length == 1? 'silver': 'white');
+					for(var j=0, n=u.length; j<n; j++) {
+						sel.append(jQuery("<option value="+u[j][0]+"></option>").text(u[j][1] == null? '-- не указано --': u[j][1]));
+					}
+				}
+
+				jQuery('#selectTypeHouse option[value="' + intIdtypeHouse + '"]').attr('selected', 1);
+				jQuery('#selectHouseMaterial option[value="' + intIdhouseMaterial + '"]').attr('selected', 1);
+				jQuery('#selectTypeEnter option[value="' + intIdtypeEnter + '"]').attr('selected', 1);
+				jQuery('#selectLift option[value="' + intIdlift + '"]').attr('selected', 1);
+				jQuery('#selectRefuseChute option[value="' + intIdrefuseChute + '"]').attr('selected', 1);
+				jQuery('#selectFirstFloorHeight').val(floatFirstFloorHeight);
+				jQuery('#selectFloorAll').val(intFloorAll);
+				jQuery('#selectYearBuild').val(intYearBuild);
+				jQuery('#selectYearCapitalRepair').val(intYearCapitalRepair);
+				jQuery('#searchHouseResult').hide();
+			},
+			error: function() {
+				alert_modal('Сервер не отвечает, попробуйте обновить страницу!');
+			}
+		})) {
+			alert_modal('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!');
+		}
+
+	} catch(e) { alert_modal('Броузер не смог отправить запрос через JQuery, попробуйте обновить страницу!') }
+}
+function myAddClient(base) {
+    var ajaxOk = function() {
+        var fio = jQuery('#field_client_fio').val();
+        jQuery.ajax({
+            url: '/spb/term/?pageID=1080&ajax=3&idbase=' + base + '&fio=' + encodeURIComponent(fio),
+            type: "GET",
+            async: false,
+            dataType: "json",
+            success: function ( response ) {
+                jQuery("#listClient").append( jQuery('<option value="'+response+'" selected>'+fio+'</option>'));
+                jQuery("#listClient").val(response);
+                makeSelect('listClient');
+            }
+        });
+    };
+    confirm_modal("ФИО клиента:\n<input id='field_client_fio' type='text' name='field_client_fio' style='width: 465px;'>", ajaxOk );
+}

@@ -1,0 +1,228 @@
+/* функция проверки полей на числовое значение 
+tddl - test drop dawn list */
+function tddlBulgakov (form_name, element_name, mes_text) {
+	if (document.forms[form_name].elements[element_name].value=="" || document.forms[form_name].elements[element_name].value=="0") {
+		return " - поле \"" + (mes_text.toUpperCase()) + " не заполнено;\n";
+	  }
+	else {
+		if (document.forms[form_name].elements[element_name].value=="1") {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		};
+		if (isNaN(document.forms[form_name].elements[element_name].value)) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть числом;\n";
+		}
+		else {
+			return "";
+		};
+	};
+}
+
+/* функция проверки полей на числовое значение 
+tddl - test drop dawn list */
+function tddl2 (form_name, element_name, mes_text) {
+	if (document.forms[form_name].elements[element_name].value=="") {
+		return " - поле \"" + (mes_text.toUpperCase()) + " не заполнено;\n";
+	  }
+	else {
+		if (document.forms[form_name].elements[element_name].value=="0") {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		};
+		if (isNaN(document.forms[form_name].elements[element_name].value)) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть числом;\n";
+		}
+		else {
+			return "";
+		};
+	};
+}
+
+/* функция проверяет числовые значения (в том числе - с разделителем) */
+function testFloatValue(form_name, element_name, mes_text, r) {
+	if ( r == 1 ) {
+	
+		// обязательное поле
+		if ( document.forms[form_name].elements[element_name].value == "" ) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" не заполнено;\n";
+		}
+		else if ( document.forms[form_name].elements[element_name].value == 0 ) {
+			return " - поле \"" + (mes_text.toUpperCase()) + "\" должно быть больше нуля;\n";
+		}
+		
+	}
+	
+	if ( ( document.forms[form_name].elements[element_name].value != "" ) && ( document.forms[form_name].elements[element_name].value != 0 ) ) {
+		// проверка по шаблону
+        var v = /^[0-9]+([\.\,][0-9]+)?$/;
+		if (!v.test(document.forms[form_name].elements[element_name].value)) {
+			return (" - поле \""+(mes_text.toUpperCase())+"\" имеет неправильный формат (можно использовать только цифры, разделитель дробной части - точка \".\" или запятая \",\");\n");
+		}
+		else {
+			return "";
+
+		};	
+	};
+	return "";
+}
+
+const ANNOTATION_MAX_LENGTH = 1950,
+    ANNOTATION_MIN_LETTER_LENGTH = 20;
+
+function _checkAnnotation(formName, fieldName, fieldLabel)
+{
+    var annotation = document.forms[formName].elements[fieldName].value;
+    var lettersAnnotation = annotation.replace(/[^A-Za-zА-ЯЁа-яё]/g, '');
+    var error = '';
+    if (annotation.length > ANNOTATION_MAX_LENGTH) {
+        error = "- поле \"" + fieldLabel.toUpperCase() + "\" не должно быть длиннее " + ANNOTATION_MAX_LENGTH
+			+ " символов;\n";
+    } else if (annotation.match(/^[0-9., ]+$/)) {
+        error = "- поле \"" + fieldLabel.toUpperCase() + "\" не должно содержать только цифры;\n";
+    } else if (lettersAnnotation.length <= ANNOTATION_MIN_LETTER_LENGTH) {
+        error = "- поле \"" + fieldLabel.toUpperCase() + "\" должно содержать не менее " + ANNOTATION_MIN_LETTER_LENGTH
+			+ " буквенных символов;\n";
+    }
+
+    return error;
+}
+
+/* Переходы по страницам */
+function goToPage(formName, pageHiddenElementName, a)
+{
+	document.forms[formName].action=formAction
+	document.forms[formName].target="_self";
+	document.forms[formName].elements[pageHiddenElementName].value=a;
+	document.forms[formName].submit();
+}
+
+// функция проверяет обязательность заполнения поля
+function testGroupCheckbox(objectName, description) {
+	var list=false;
+	if (objectName.length) {
+		for (i = 0; i < objectName.length; i++) {
+			if (objectName[i].checked) {
+				list=true;
+			};
+		};
+	}
+	else {
+		if (objectName.checked) {
+			list=true;
+		};
+	};
+	
+	if (list) {
+		return "";
+	}
+	else {
+		return " - поле \""+description.toUpperCase()+"\" не заполнено;\n";
+	};
+}
+
+// функция проверяет обязательность заполнения поля
+function testCheckbox(objectName, description) {
+	var list=false;
+	if (objectName.checked) {
+		list=true;
+	};
+	if (list) {
+		return "";
+	}
+	else {
+		return " - поле \""+description.toUpperCase()+"\" не заполнено;\n";
+	};
+}
+
+function setRadioValue(radioObject, newValue) {	
+	var value = null;
+	if (radioObject) {
+		for (var i=0; i<radioObject.length; i++) {
+			if (radioObject[i].value == newValue) {
+				radioObject[i].checked = true;
+				break;
+			};
+		};
+	};	
+}
+
+// checkboxpopup
+function showList(url, idList, selectedIDs, wW, wH) {
+	openWindow(url+'&id='+idList+'&ids='+selectedIDs+'&w='+wW+'&h='+wH, wW, wH);
+}
+
+// подсчет жилой площади
+function summa(elementName, source, formName) {
+    if (window.yaCounter13320217) yaCounter13320217.reachGoal('living_space');
+    if (document.forms[formName]) {
+        var elements = document.forms[formName].elements;
+        if (elements[source]) {
+            var r = /^[0-9\(\)\+\.]+$/i;
+            var formula = elements[source].value;
+            var element = elements[elementName];
+            if (formula == '') {
+                element.disabled = false;
+            } else if (r.test(formula)) {
+                try {
+                    element.value = eval(formula);
+                    element.disabled = true;
+                } catch (e) {
+                    element.value = '';
+                    element.disabled = false;
+                }
+            } else {
+                element.value = '';
+                alert_modal("- поле \"ПЛОЩАДЬ КОМНАТ\" имеет неправильный формат (Можно использовать только цифры и точку. Для указания нескольких площадей используйте \"плюс\", \"+\");\n");
+            }
+        }
+    }
+}
+
+function showAgentInfo(id_firm, id_agent)
+{
+	openWindow("/agency.php?id=" + id_firm + "&ida=" + id_agent, 850, 500);
+}
+function showAgentWindow(id)
+{
+	openWindow("agent_info.php?ID="+id+"&ext=1", 700, 700);
+}
+
+function getGIS(s) {
+	//alert('Извините, карта временно недоступна!');
+	//return false;
+	var a = new Array();
+	a=s.split("-");
+	/*if (a[0] == 'obl') {
+		openWindow("http://gis.bn.ru/wmap_asp/main4lo.asp?id="+a[1],500,500);	
+	}
+	else {
+		openWindow("http://gis.bn.ru/wmap_asp/main4.asp?lay="+a[0]+"&id="+a[1],500,500);	
+	}*/
+	openWindow("http://www.emls.ru/spb/term/admin/mapg/adresonmap.phtml?lay="+a[0]+"&id="+a[1],500,500);
+
+};
+
+
+
+function showphone(id, base, object, firm, type, ag, order, fr, hostname) { 
+        jQuery("#showphone"+order).hide();
+	jQuery("#hidephone"+order).show();
+		var data = {"id":id,"base":base};
+		if(object) data["object"] = object;
+                if(firm) data["firm"] = firm;
+		if(type) data["type"] = type;
+                if(ag) data["ag"] = ag;
+                if(order) data["order"] = order;
+                if(fr) data["fr"] = fr;
+                if(hostname) data["hostname"] = hostname;
+                
+		jQuery.post("/ajaxbuild/phoneview.php", data, function( data, result ) {}, "json");
+                
+            
+        if (typeof ga == 'function') {                     
+            var ga_p = jQuery.post("/ajaxbuild/gapars.php", data)
+            .success(function(result) { 
+                completerun=result; 
+                var response = jQuery.parseJSON(result);
+                ga('send', 'event', 'Phones', "'"+response['type']+"'", "'"+response['oper']+'/'+response['obj']+'/city_id='+response['reg']+'/object_type='+response['objtype']+'/'+response['id']+"'");               
+            }, "json");            
+        }
+}
