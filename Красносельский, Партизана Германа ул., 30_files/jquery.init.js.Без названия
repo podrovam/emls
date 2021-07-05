@@ -1,0 +1,30 @@
+jQuery.noConflict();
+jQuery(document).ready(
+	function () {
+		/*var objFieldSearchAddress  = document.getElementById("fieldSearchAddress");
+		if ( objFieldSearchAddress ) {
+			objFieldSearchAddress.onkeyup = searchAddress;
+		}*/
+	
+		var objSelectReg  = document.getElementById("selectReg");
+		if ( objSelectReg ) {
+			objSelectReg.onchange = function () {
+				updSearch(document.getElementById("selectReg").value, 0, 0, 0, 0);
+			}
+		}
+		
+		var objSelectDept  = document.getElementById("selectDept");
+		if ( objSelectDept) {
+			objSelectDept.onchange = function () {
+				updSearch(document.getElementById("selectReg").value, document.getElementById("selectDept").value, document.getElementById("selectDist").value || 0, 0, 0);
+			}
+		}
+		
+		var objSelectDist  = document.getElementById("selectDist");
+		if ( objSelectDist) {
+			objSelectDist.onchange = function () {
+				updateSelectAjax('/ajax/getstreet2/' + document.getElementById("selectDist").value + '.html?query=reg/' + document.getElementById("selectReg").value + '&rnd=' + Math.random(), 'selectStreet');
+			}
+		}
+	}
+);
