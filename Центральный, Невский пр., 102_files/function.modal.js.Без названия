@@ -1,0 +1,115 @@
+function createModalElement( str_title )
+{
+    jQuery('#dialog-confirm').remove();
+    jQuery("<div id=dialog-confirm></div>").attr("title", str_title).prependTo("body");
+
+    var str_html = '<p>';
+    str_html = str_html + '<span id="dialog-confirm-text"></span>';
+    str_html = str_html + '</p>';
+    jQuery('#dialog-confirm').html( str_html );
+
+    return true;
+}
+
+function alert_modal( str_message, str_title, buttons ) {
+
+    if ( str_title == undefined ) {
+        str_title = 'Внимание';
+    }
+
+    createModalElement( str_title );
+
+    var find = "\n";
+    var re = new RegExp( find, 'g' );
+    str_message = str_message.replace( re, "<br />" );
+    jQuery('#dialog-confirm-text').html( str_message );
+
+
+	if(!buttons) buttons = {
+		"ОК": function() {
+			jQuery( this ).dialog( "close" );
+		}
+	};
+	
+    jQuery('#dialog-confirm').dialog( {
+        draggable: false,
+        position: { my: "center", at: "center", of: window },
+        resizable: false,
+        height: "auto",
+        width: 500,
+        modal: true,
+        buttons: buttons
+    });
+}
+
+function confirm_modal( str_message, h_function_ok, h_function_no, name_btn_ok, name_btn_no, skipBr )
+{
+    var str_title = 'Подтвердите действие';
+
+    createModalElement( str_title );
+
+    if ( name_btn_ok == undefined ) {
+        name_btn_ok = "Да";
+    }
+    if ( name_btn_no == undefined ) {
+        name_btn_no = "Нет";
+    }
+
+    var find = "\n",
+        re = new RegExp( find, 'g' );
+    if (!skipBr) {
+        str_message = str_message.replace( re, "<br />" );
+    }
+
+    jQuery('#dialog-confirm-text').html( str_message );
+
+    var buttonsOpts = {};
+    buttonsOpts[name_btn_no] = function() { jQuery( this ).dialog( "close" ); if ( h_function_no != undefined ) { h_function_no(); } }
+    buttonsOpts[name_btn_ok] = function() { jQuery( this ).dialog( "close" ); h_function_ok(); }
+
+    jQuery('#dialog-confirm').dialog( {
+        draggable: false,
+        position: { my: "center", at: "center", of: window },
+        resizable: false,
+        height: "auto",
+        width: 500,
+        modal: true,
+        buttons : buttonsOpts
+    });
+}
+
+function html_modal( str_message, h_function_ok, name_btn_ok, name_btn_no, int_width, h_function_no )
+{
+    var str_title = 'Внимание';
+    createModalElement( str_title );
+
+    if ( int_width == undefined ) {
+        int_width = 500;
+    }
+    if ( name_btn_ok == undefined ) {
+        name_btn_ok = "Да";
+    }
+    if ( name_btn_no == undefined ) {
+        name_btn_no = "Нет";
+    }
+
+    var find = "\n";
+    var re = new RegExp( find, 'g' );
+    str_message = str_message.replace( re, "<br />" );
+
+    jQuery('#dialog-confirm-text').html( str_message );
+
+    var buttonsOpts = {};
+    buttonsOpts[name_btn_no] = function() { jQuery( this ).dialog( "close" ); if ( h_function_no != undefined ) { h_function_no(); } }
+    buttonsOpts[name_btn_ok] = function() { jQuery( this ).dialog( "close" ); h_function_ok(); }
+
+    jQuery('#dialog-confirm').dialog( {
+        draggable: false,
+        position: { my: "center", at: "center", of: window },
+        resizable: false,
+        height: "auto",
+        width: int_width,
+        modal: true,
+        buttons : buttonsOpts
+    });
+}
